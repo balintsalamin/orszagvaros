@@ -99,10 +99,31 @@ input:disabled{opacity:.55;cursor:default}
 .perfect .rw i{display:inline-block;font-style:normal;color:var(--pink);-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill;animation:jmp .7s ease-in-out infinite;animation-delay:calc(var(--i)*-.19s)}
 .perfect .rw i:nth-child(3n){color:var(--teal)}.perfect .rw i:nth-child(3n+1){color:#ffb400}
 @keyframes jmp{0%,100%{transform:none}20%{transform:translate(-6px,-20px) rotate(-18deg) scale(1.15)}45%{transform:translate(7px,-6px) rotate(14deg)}70%{transform:translate(-3px,-26px) rotate(-8deg) scale(1.2)}}
+
+main{padding-bottom:130px}
+#dock{position:fixed;left:0;right:0;bottom:0;z-index:8;display:flex;gap:12px;overflow-x:auto;padding:14px 12px 10px;background:var(--paper);border-top:3px solid var(--ink)}
+#dock[hidden]{display:none}
+.pk{display:flex;flex:none;gap:6px;align-items:center}
+.pb{position:relative;display:flex;flex-direction:column;align-items:center;min-width:68px;padding:4px 10px;font:600 .8rem/1.1 Fredoka,sans-serif;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:14px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;transition:transform .1s,background .1s}
+.pb .ae{font-size:1.7rem;font-weight:400}
+.pb i{position:absolute;top:-12px;right:-8px;font-style:normal;font-size:1.1rem}
+.pb:hover:not(:disabled){background:#ffe3ea;transform:translateY(-2px) rotate(-2deg)}
+.pb:active:not(:disabled){transform:translate(3px,3px);box-shadow:none}
+.pb:disabled{cursor:default;box-shadow:none;border-style:dashed}
+.pb.hit{animation:hit .3s}
+@keyframes hit{50%{transform:scale(.82);background:#ffc2d4}}
+.kb{padding:4px 8px;font:600 .8rem Fredoka,sans-serif;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:2px 2px 0 var(--ink);cursor:pointer}
+.kb:active{transform:translate(2px,2px);box-shadow:none}.kb.sel{background:var(--pink);color:#fff}
+#alarm{position:fixed;inset:0;z-index:60;pointer-events:none;display:grid;place-content:center;text-align:center;animation:flash 1s linear forwards}
+#alarm .sir{font-size:34vmin;line-height:1;animation:siren .25s ease-in-out infinite alternate}
+#alarm .by{font-weight:700;font-size:2rem;color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
+@keyframes flash{0%,50%{background:rgba(230,20,50,.7)}25%,75%{background:rgba(230,20,50,.12)}100%{background:rgba(230,20,50,0)}}
+@keyframes siren{from{transform:rotate(-14deg) scale(.95)}to{transform:rotate(14deg) scale(1.1)}}
 </style>
 </head>
 <body>
 <main id="app"></main>
+<div id="dock" hidden></div>
 <script>
 const $=s=>document.querySelector(s),app=$('#app');
 const PFX='orszagvaros-',DEF=['Ország','Város','Folyó','Állat','Növény','Név','Étel','Foglalkozás'],LET='ABCDEFGHIJKLMNOPRSTUVZ';
@@ -117,7 +138,7 @@ function startHost(n){
   name=n;host=true;if(peer)peer.destroy();
   const code=Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.random()*24|0]).join('');
   peer=new Peer(PFX+code);
-  peer.on('open',id=>{me=id;S={code,phase:'lobby',players:{[me]:{n:name,sc:0}},round:0,used:[]};bc()});
+  peer.on('open',id=>{me=id;S={code,phase:'lobby',players:{[me]:{n:name,sc:0}},round:0,used:[],kick:{},host:me};bc()});
   peer.on('error',e=>{if(e.type==='unavailable-id')startHost(n);else{msg='Hiba: '+e.type;render()}});
   peer.on('connection',c=>{c.on('data',m=>onMsg(c.peer,m,c));c.on('close',()=>{delete conns[c.peer];if(S.phase==='lobby'){delete S.players[c.peer];bc()}else{if(S.players[c.peer])S.players[c.peer].off=true;chk();bc()}})});
 }
@@ -125,8 +146,8 @@ function join(n,code){
   name=n;peer=new Peer();
   peer.on('open',id=>{me=id;hc=peer.connect(PFX+code,{reliable:true});
     hc.on('open',()=>send(hc,{t:'join',n:name}));
-    hc.on('data',m=>{if(m.t==='s'){S=m.s;render()}else if(m.t==='err'){msg=m.e;S=null;render()}});
-    hc.on('close',()=>{msg='A kapcsolat megszakadt.';S=null;render()})});
+    hc.on('data',m=>{if(m.t==='s'){S=m.s;render()}else if(m.t==='err'){msg=m.e;S=null;render()}else if(m.t==='alarm')ring(m.f);else if(m.t==='kicked'){msg='Kirúgtak a játékból 🥾';S=null;try{peer.destroy()}catch(e){}render()}});
+    hc.on('close',()=>{if(S){msg='A kapcsolat megszakadt.';S=null;render()}})});
   peer.on('error',e=>{msg='Nem sikerült csatlakozni ('+e.type+'). Ellenőrizd a szobakódot.';render()});
 }
 function onMsg(id,m,c){
@@ -136,6 +157,8 @@ function onMsg(id,m,c){
   else if(m.t==='vote'&&S.phase==='review'&&m.ci===S.ci&&!S.vdone[id]){setV(id,m.ci,m.g,m.r);bc()}
   else if(m.t==='vdone'&&S.phase==='review'&&m.ci===S.ci&&!S.vdone[id]){for(const k in m.v)setV(id,m.ci,k,m.v[k]);S.vdone[id]=1;if(vall())nxt(S.ci);else bc()}
   else if(m.t==='nx'&&S.phase==='results')nxv(id,m.v);
+  else if(m.t==='kick'&&S.phase!=='lobby')kickv(id,m.to);
+  else if(m.t==='alarm')alarm(id,m.to);
 }
 const setV=(id,ci,g,r)=>{((S.votes[ci]??={})[g]??={})[id]=Math.max(0,Math.min(10,Math.round(+r)||0))};
 
@@ -145,13 +168,13 @@ function begin(){
   const g=id=>$('#'+id).value;
   let cats=g('cats').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,20);if(!cats.length)cats=DEF;
   const letters=[...new Set([...g('letters').toUpperCase()].filter(x=>/\p{L}/u.test(x)))].join('')||LET;
-  S.cfg={cats,letters,rounds:Math.max(1,+g('rounds')||5),timer:Math.max(0,+g('timer')||0),vtimer:Math.max(0,+g('vtimer')||0),live:$('#live').checked};
+  S.cfg={cats,letters,rounds:Math.max(1,+g('rounds')||5),timer:Math.max(0,+g('timer')||0),vtimer:Math.max(0,+g('vtimer')||0),live:$('#live').checked,panel:$('#panel').checked};
   startRound();
 }
 function startRound(){
   const c=S.cfg;let pool=[...c.letters].filter(l=>!S.used.includes(l));
   if(!pool.length){S.used=[];pool=[...c.letters]}
-  S.letter=pool[Math.random()*pool.length|0];S.used.push(S.letter);S.round++;S.phase='play';A={};S.done={};S.left=c.timer;
+  S.letter=pool[Math.random()*pool.length|0];S.used.push(S.letter);S.round++;S.phase='play';A={};S.done={};S.kick={};S.left=c.timer;
   clearInterval(tm);clearInterval(vt);if(c.timer)tm=setInterval(()=>{if(--S.left<=0)endPlay();else bc()},1000);
   bc();
 }
@@ -169,7 +192,7 @@ function toReview(){
 }
 function groups(ci){
   const L=norm(S.letter),g={};
-  for(const p in S.ans){const raw=(S.ans[p][ci]||'').trim();if(!raw)continue;const k=norm(raw);
+  for(const p in S.ans){if(!S.players[p])continue;const raw=(S.ans[p][ci]||'').trim();if(!raw)continue;const k=norm(raw);
     (g[k]??={t:raw,w:[],bad:!k.startsWith(L)}).w.push(p)}
   return Object.entries(g);
 }
@@ -190,7 +213,7 @@ function score(){
   for(let ci=0;ci<S.cfg.cats.length;ci++)for(const[k,g]of groups(ci)){
     let val=0,perfect=false,n=0;
     if(!g.bad){
-      const r=Object.entries(S.votes[ci]?.[k]||{}).filter(([p])=>!g.w.includes(p)).map(x=>x[1]);n=r.length;
+      const r=Object.entries(S.votes[ci]?.[k]||{}).filter(([p])=>S.players[p]&&!g.w.includes(p)).map(x=>x[1]);n=r.length;
       if(!n)val=10;else{const z=r.filter(x=>x===0).length;if(z<=n-z){val=r.reduce((a,x)=>a+x,0)/n;perfect=r.every(x=>x===10)}}
     }
     val=Math.round(val*10)/10;
@@ -216,7 +239,7 @@ function joinGame(){const n=$('#nm').value.trim(),c=$('#cd').value.trim().toUppe
 
 /* ---------- felület ---------- */
 const landing=()=>`${ttl('Ország, város!')}<div class=sticker>Online, saját kategóriákkal!</div><p class=mut>Nincs szerver: a játékosok közvetlenül egymáshoz kapcsolódnak, a házigazda böngészője vezeti a játékot.</p>${msg?`<p class=bad>${esc(msg)}</p>`:''}<div class=card><label>Neved<input id=nm maxlength=20 value="${esc(name)}"></label><button class=b onclick="hostGame()">Új játék indítása</button></div><div class=card><label>Szobakód<input id=cd maxlength=4 value="${esc(location.hash.slice(1))}"></label><button class=b onclick="joinGame()">Csatlakozás</button></div>`;
-const settings=()=>`<div class=card><h3>Beállítások</h3><label>Kategóriák (soronként egy)<textarea id=cats rows=8>${DEF.join('\n')}</textarea></label><label>Körök száma<input id=rounds type=number min=1 value=5></label><label>Kitöltési idő másodpercben (0 = nincs, addig tart, amíg mindenki beküldi)<input id=timer type=number min=0 value=90></label><label>Szavazási idő kategóriánként másodpercben (0 = nincs)<input id=vtimer type=number min=0 value=20></label><label>Betűk, amikből sorsolunk<input id=letters value="${LET}"></label><label class=chk><input id=live type=checkbox checked> A válasz írója élőben látja, ki mennyit ad rá</label></div><button class=b onclick="begin()">Játék indítása</button>`;
+const settings=()=>`<div class=card><h3>Beállítások</h3><label>Kategóriák (soronként egy)<textarea id=cats rows=8>${DEF.join('\n')}</textarea></label><label>Körök száma<input id=rounds type=number min=1 value=5></label><label>Kitöltési idő másodpercben (0 = nincs, addig tart, amíg mindenki beküldi)<input id=timer type=number min=0 value=90></label><label>Szavazási idő kategóriánként másodpercben (0 = nincs)<input id=vtimer type=number min=0 value=20></label><label>Betűk, amikből sorsolunk<input id=letters value="${LET}"></label><label class=chk><input id=live type=checkbox checked> A válasz írója élőben látja, ki mennyit ad rá</label><label class=chk><input id=panel type=checkbox checked> Gombpanel: a játékosok 🚨 gombbal riogathatják egymást</label></div><button class=b onclick="begin()">Játék indítása</button>`;
 const ansHtml=x=>{const sz=x.bad?1:(1+x.val*.14).toFixed(2),cls=x.perfect?'perfect':x.val>=8?'shine':x.val===0?'zero':'';
   const t=x.perfect?[...x.t].map((c,i)=>`<i style="--i:${i}">${c===' '?'&nbsp;':esc(c)}</i>`).join(''):esc(x.t);
   return `<div class="ra ${cls}"><span class=rw style="font-size:${sz}rem">${t}</span><div class=who>✍️ ${x.w.map(p=>`<span class="chip sm lvc">${av(p)} ${esc(S.players[p]?.n||'?')}</span>`).join('')}<b class=pt>${x.bad?'rossz betű':x.val===0?'elutasítva':'+'+x.pts}</b></div></div>`};
@@ -259,10 +282,10 @@ function upd(){
 }
 function render(){
   if(S&&S.phase==='collect'&&sent!==S.round){sent=S.round;const a=[...document.querySelectorAll('.in')].map(i=>i.value);host?gotAns(me,a):send(hc,{t:'ans',a})}
-  if(!S){key='';app.innerHTML=landing();return}
+  if(!S){key='';app.innerHTML=landing();dock();return}
   const k=S.phase+S.round+(S.phase==='review'?S.ci:'');
-  if(k===key){upd();return}
-  key=k;app.innerHTML=view();upd();scrollTo(0,0);fx();
+  if(k===key){upd();dock();return}
+  key=k;app.innerHTML=view();upd();dock();scrollTo(0,0);fx();
 }
 /* ---------- beküldés és csúszka ---------- */
 const lock=()=>{const b=$('#sb');if(b){b.disabled=true;b.textContent='Beküldve ✓ Várunk a többiekre…'}};
@@ -287,6 +310,44 @@ app.addEventListener('input',e=>{
   tone(260+v*75,.07,'square',.05);navigator.vibrate?.(8);
   if(v===0)snd('no');else if(v===10){snd('yes');const r=i.getBoundingClientRect();burst(r.right-20,r.top,['✨','⭐','💛'])}
   const m={t:'vote',ci:S.ci,g:g.dataset.k,r:v};host?onMsg(me,m):send(hc,m);
+});
+/* ---------- gombpanel, riasztás, kirúgás ---------- */
+function ring(f){
+  document.querySelector('#alarm')?.remove();
+  const a=document.createElement('div');a.id='alarm';a.innerHTML=`<div class=sir>🚨</div><div class=by>${esc(S?.players[f]?.n||'')}</div>`;document.body.append(a);
+  for(let i=0;i<4;i++)tone(i%2?1000:700,.25,'sawtooth',.08,i*.25,i%2?700:1000);
+  navigator.vibrate?.([120,60,120]);setTimeout(()=>a.remove(),1000);
+}
+function alarm(id,to){
+  if(!S.cfg?.panel||!S.players[to]||S.players[to].off)return;
+  if(to===me)ring(id);else if(conns[to])send(conns[to],{t:'alarm',f:id});
+}
+function kickv(id,to){
+  if(!S.players[to]||to===S.host||to===id||act().length<3)return;
+  const k=(S.kick[to]??={});if(k[id])delete k[id];else k[id]=1;
+  const v=Object.keys(k).filter(p=>S.players[p]&&!S.players[p].off).length;
+  if(v>=Math.floor((act().length-1)/2)+1){
+    const c=conns[to];if(c){send(c,{t:'kicked'});setTimeout(()=>c.close(),400)}
+    delete S.players[to];delete S.kick[to];delete conns[to];chk();
+  }
+  bc();
+}
+let dsig='';
+function dock(){
+  const d=$('#dock');
+  if(!S||S.phase==='lobby'){d.hidden=true;dsig='';return}
+  const a=act(),can=a.length>=3,pn=S.cfg.panel,need=Math.floor((a.length-1)/2)+1;
+  const sig=JSON.stringify([a.map(p=>[p,S.players[p].n]),S.kick,pn,me]);
+  if(sig===dsig)return;dsig=sig;d.hidden=false;
+  d.innerHTML=a.map(p=>{
+    const kv=Object.keys(S.kick?.[p]||{}).filter(q=>S.players[q]&&!S.players[q].off).length,mine=S.kick?.[p]?.[me];
+    return `<div class=pk><button class=pb data-al="${p}" ${p===me||!pn?'disabled':''} title="Riasztás"><b class=ae>${av(p)}</b>${esc(S.players[p].n)}${p===me?' (te)':''}${p!==me&&pn?'<i>🚨</i>':''}</button>`
+    +(can&&p!==me&&p!==S.host?`<button class="kb${mine?' sel':''}" data-kk="${p}" title="Kirúgás szavazás">🥾 ${kv?kv+'/'+need:''}</button>`:'')+`</div>`}).join('');
+}
+$('#dock').addEventListener('click',e=>{
+  const a=e.target.closest('[data-al]'),k=e.target.closest('[data-kk]');
+  if(a&&!a.disabled){const m={t:'alarm',to:a.dataset.al};host?onMsg(me,m):send(hc,m);snd('click');a.classList.remove('hit');void a.offsetWidth;a.classList.add('hit')}
+  else if(k){const m={t:'kick',to:k.dataset.kk};host?onMsg(me,m):send(hc,m);snd('no')}
 });
 /* ---------- hangok (WebAudio, nincs hangfájl) ---------- */
 let ac,mute=false,pc=0;try{mute=localStorage.getItem('ov-mute')==='1'}catch(e){}
