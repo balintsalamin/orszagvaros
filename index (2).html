@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ország, város</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<style>
+:root{--ink:#1a1033;--sun:#ffd23f;--pink:#ff4f8b;--teal:#14c8a8;--blue:#3a6df0;--paper:#fffaf0;--sh:4px 4px 0 var(--ink)}
+*{box-sizing:border-box}
+body{margin:0;font:500 17px/1.45 Fredoka,system-ui,sans-serif;color:var(--ink);background:var(--sun) radial-gradient(rgba(26,16,51,.13) 2px,transparent 2.4px) 0 0/28px 28px;min-height:100vh;overflow-x:hidden;animation:drift 12s linear infinite}
+@keyframes drift{to{background-position:28px 28px}}
+main{position:relative;z-index:1;max-width:620px;margin:0 auto;padding:22px 16px 70px}
+h1.t{font-size:clamp(2.6rem,13vw,4rem);line-height:1.05;margin:.1em 0 .25em;font-weight:700}
+.w{display:inline-block;white-space:nowrap}
+.t span{display:inline-block;color:var(--c,#fff);-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:3px 4px 0 var(--ink);animation:bob 1.5s ease-in-out infinite;animation-delay:calc(var(--i)*-.12s)}
+.t span:nth-child(4n+1){--c:var(--pink)}.t span:nth-child(4n+3){--c:var(--teal)}.t span:nth-child(4n){--c:#8fb0ff}
+@keyframes bob{50%{transform:translateY(-8px) rotate(3deg)}}
+h2{font-size:1.9rem;margin:0;font-weight:700}h3{margin:0;font-size:1.4rem}
+.sticker{display:inline-block;background:var(--pink);color:#fff;font-weight:700;padding:4px 14px;border:3px solid var(--ink);border-radius:10px;box-shadow:var(--sh);rotate:-3deg;margin-bottom:10px}
+.card{background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:var(--sh);padding:16px 18px;margin:16px 0;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--n,0)*80ms)}
+@keyframes pop{from{transform:scale(.6) translateY(30px);opacity:0}}
+label{display:block;margin:12px 0 4px;font-weight:600}
+input,textarea{width:100%;font:inherit;font-size:1.1rem;padding:10px 12px;border:3px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);transition:transform .15s,box-shadow .15s}
+input:focus,textarea:focus{outline:0;transform:scale(1.02) rotate(-.4deg);box-shadow:0 0 0 4px var(--pink)}
+button:focus-visible{outline:4px solid var(--blue);outline-offset:3px}
+.chk{display:flex;gap:10px;align-items:center}.chk input{width:24px;height:24px;accent-color:var(--pink)}
+input[type=range]{width:50%;padding:0;vertical-align:middle;accent-color:var(--pink);border:0;box-shadow:none;background:none}
+output{display:inline-block;min-width:3.5em;font-weight:700}
+.b{width:100%;margin-top:14px;padding:12px;font:700 1.3rem Fredoka,sans-serif;color:#fff;background:var(--pink);border:3px solid var(--ink);border-radius:16px;box-shadow:var(--sh);text-shadow:0 2px 0 rgba(0,0,0,.25);cursor:pointer;transition:transform .12s,box-shadow .12s}
+.b:hover{transform:translate(-2px,-3px) rotate(-.8deg);box-shadow:7px 8px 0 var(--ink)}
+.b:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.v{font:600 1rem Fredoka,sans-serif;padding:8px 16px;border:3px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .1s}
+.v:hover{transform:translateY(-2px) rotate(-2deg)}.v:active{transform:translate(3px,3px);box-shadow:none}
+.v.y.on{background:var(--teal)}.v.n.on{background:var(--pink);color:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.top{display:flex;gap:18px;align-items:center;margin:8px 0 4px}
+.letter{width:112px;height:112px;flex:none;display:grid;place-items:center;font-size:4.8rem;font-weight:700;color:#fff;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;background:var(--blue);border:4px solid var(--ink);border-radius:50%;box-shadow:var(--sh);rotate:-6deg}
+.roll{animation:shake .14s infinite}.land{animation:land .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes land{from{transform:scale(2.2) rotate(40deg)}}
+@keyframes shake{25%{transform:translateX(-5px) rotate(-4deg)}75%{transform:translateX(5px) rotate(4deg)}}
+@keyframes hop{40%{transform:translateY(-14px) scale(1.03)}}
+.shk{animation:shake .4s}.hop{animation:hop .4s}
+.tm{display:inline-block;font-weight:700;font-size:1.6rem;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:0 16px}.tm:empty{display:none}
+.tm.hot{background:var(--pink);color:#fff;animation:pulse .5s infinite alternate}
+@keyframes pulse{to{transform:scale(1.15) rotate(-3deg)}}
+.chip{display:inline-block;padding:4px 14px;font-weight:600;border:3px solid var(--ink);border-radius:999px;background:var(--teal);box-shadow:3px 3px 0 var(--ink);animation:pop .4s cubic-bezier(.34,1.56,.64,1) both}
+.chip:nth-child(3n+2){background:var(--sun)}.chip:nth-child(3n){background:#ff9ec0}
+.code{font-size:2.2rem;font-weight:700;letter-spacing:.25em;color:var(--pink);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
+.ans{font-size:2rem;font-weight:700;line-height:1.2}.mut{color:#6a5f8a;font-size:.9rem;word-break:break-all}.bad{color:#d6204f;font-weight:600}
+.g:nth-child(odd){rotate:-.6deg}.g:nth-child(even){rotate:.6deg}
+.rk{display:flex;align-items:center;gap:10px;background:var(--paper);border:3px solid var(--ink);border-radius:16px;box-shadow:var(--sh);padding:10px 14px;margin:12px 0;animation:slide .55s cubic-bezier(.34,1.56,.64,1) both;animation-delay:calc(var(--n,0)*120ms)}
+@keyframes slide{from{transform:translateX(-120%) rotate(-8deg)}}
+.rk.top1{background:var(--sun);transform:scale(1.04)}.top1 .rn{animation:bob 1s infinite}
+.rn{font-size:2rem;min-width:2.2rem;text-align:center}.rname{flex:1;font-weight:600}.rpt{color:#18946f;font-weight:700}.rt{font-size:1.9rem;min-width:2.4rem;text-align:right}
+.mute{position:fixed;top:12px;right:12px;z-index:9;width:48px;height:48px;border-radius:50%;border:3px solid var(--ink);background:var(--paper);box-shadow:3px 3px 0 var(--ink);font-size:1.4rem;cursor:pointer}.mute:active{transform:translate(3px,3px);box-shadow:none}
+.fl{position:fixed;left:var(--x);top:var(--y);font:700 var(--s) Fredoka,sans-serif;color:var(--ink);opacity:.1;rotate:var(--r);pointer-events:none;z-index:0;animation:float var(--d) ease-in-out infinite alternate}
+@keyframes float{to{transform:translateY(-40px) rotate(20deg)}}
+.cf,.sp{position:fixed;pointer-events:none;z-index:20}
+.cf{top:-40px;left:var(--x);font-size:var(--s);animation:fall var(--d) linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
+.sp{left:var(--x);top:var(--y);font-size:1.6rem;animation:rise .8s ease-out forwards}
+@keyframes rise{to{transform:translate(var(--dx),var(--dy)) scale(.4) rotate(90deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;width:auto;height:44px;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;cursor:pointer;--p:100%}
+input[type=range]:focus{transform:none;box-shadow:none}
+input[type=range]::-webkit-slider-runnable-track{height:22px;border-radius:99px;box-shadow:inset 0 0 0 3px var(--ink);background:linear-gradient(90deg,transparent var(--p),#fff var(--p)),linear-gradient(90deg,var(--pink),var(--sun),var(--teal))}
+input[type=range]::-moz-range-track{height:22px;border-radius:99px;box-shadow:inset 0 0 0 3px var(--ink);background:linear-gradient(90deg,transparent var(--p),#fff var(--p)),linear-gradient(90deg,var(--pink),var(--sun),var(--teal))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:38px;height:38px;margin-top:-8px;border-radius:50%;background:#fff;border:4px solid var(--ink);box-shadow:3px 3px 0 var(--ink);transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+input[type=range]::-moz-range-thumb{box-sizing:border-box;width:34px;height:34px;border-radius:50%;background:#fff;border:4px solid var(--ink);box-shadow:3px 3px 0 var(--ink);transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.12)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.3) rotate(-10deg)}
+input[type=range]:active::-moz-range-thumb{transform:scale(1.3) rotate(-10deg)}
+input:disabled{opacity:.55;cursor:default}
+.sl{display:flex;align-items:center;gap:12px;margin-top:8px}
+.face{font-size:2.6rem;width:3rem;text-align:center;flex:none}
+.num{font-size:1.8rem;font-weight:700;min-width:3rem;text-align:center;background:var(--sun);border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);flex:none}
+.bump{animation:bump .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bump{from{transform:scale(1.6) rotate(-12deg)}}
+.g.rej{background:#ffe3ea}.g.rej .ans{text-decoration:line-through;color:#9b93b5}
+.rejmsg{display:none;color:#d6204f;font-weight:600}.g.rej .rejmsg{display:block;animation:pop .3s both}
+.who{display:flex;flex-wrap:wrap;align-items:center;gap:2px;font-size:.95rem}
+.chip.sm{padding:1px 10px;font-size:.95rem;box-shadow:2px 2px 0 var(--ink);margin:2px 4px 2px 0}.chip.lvc{animation:none}
+.lv{margin-top:8px}
+.b.alt{background:var(--blue)}.b:disabled{opacity:.7;cursor:default;transform:none}
+.b.sel{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}.b.sel::after{content:' ✓'}
+.row .b{flex:1;min-width:150px}
+.ra{margin:12px 0;padding-bottom:8px;border-bottom:2px dashed rgba(26,16,51,.2)}
+.rw{display:inline-block;font-weight:700;line-height:1.15}
+.pt{background:var(--teal);border:2px solid var(--ink);border-radius:8px;padding:0 8px;font-weight:700;margin-left:4px}
+.zero .rw{text-decoration:line-through;color:#9b93b5}.zero .pt{background:#ffc2d4}
+.shine .rw,.perfect .rw{background:linear-gradient(100deg,#c98a00 20%,#fff2a8 40%,#ffd23f 50%,#fff2a8 60%,#c98a00 80%) 0 0/250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(1px 2px 0 var(--ink));animation:glint 1.8s linear infinite}
+.shine .rw::after,.perfect .rw::after{content:'✨';font-size:.55em;position:relative;top:-.6em;animation:twk .8s ease-in-out infinite alternate}
+@keyframes glint{to{background-position:-250% 0}}
+@keyframes twk{to{transform:scale(1.7) rotate(25deg);opacity:.5}}
+.perfect .rw{background:none;color:inherit;filter:none;animation:none}
+.perfect .rw i{display:inline-block;font-style:normal;color:var(--pink);-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill;animation:jmp .7s ease-in-out infinite;animation-delay:calc(var(--i)*-.19s)}
+.perfect .rw i:nth-child(3n){color:var(--teal)}.perfect .rw i:nth-child(3n+1){color:#ffb400}
+@keyframes jmp{0%,100%{transform:none}20%{transform:translate(-6px,-20px) rotate(-18deg) scale(1.15)}45%{transform:translate(7px,-6px) rotate(14deg)}70%{transform:translate(-3px,-26px) rotate(-8deg) scale(1.2)}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const $=s=>document.querySelector(s),app=$('#app');
+const PFX='orszagvaros-',DEF=['Ország','Város','Folyó','Állat','Növény','Név','Étel','Foglalkozás'],LET='ABCDEFGHIJKLMNOPRSTUVZ';
+const norm=s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let peer,me='',name='',host=false,hc=null,conns={},S=null,A={},sent=-1,key='',tm=null,vt=null,msg='';
+const send=(c,m)=>{try{c.send(m)}catch(e){}};
+function bc(){for(const id in conns)send(conns[id],{t:'s',s:S});render()}
+
+/* ---------- hálózat (P2P, a házigazda böngészője a "szerver") ---------- */
+function startHost(n){
+  name=n;host=true;if(peer)peer.destroy();
+  const code=Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.random()*24|0]).join('');
+  peer=new Peer(PFX+code);
+  peer.on('open',id=>{me=id;S={code,phase:'lobby',players:{[me]:{n:name,sc:0}},round:0,used:[]};bc()});
+  peer.on('error',e=>{if(e.type==='unavailable-id')startHost(n);else{msg='Hiba: '+e.type;render()}});
+  peer.on('connection',c=>{c.on('data',m=>onMsg(c.peer,m,c));c.on('close',()=>{delete conns[c.peer];if(S.phase==='lobby'){delete S.players[c.peer];bc()}else{if(S.players[c.peer])S.players[c.peer].off=true;chk();bc()}})});
+}
+function join(n,code){
+  name=n;peer=new Peer();
+  peer.on('open',id=>{me=id;hc=peer.connect(PFX+code,{reliable:true});
+    hc.on('open',()=>send(hc,{t:'join',n:name}));
+    hc.on('data',m=>{if(m.t==='s'){S=m.s;render()}else if(m.t==='err'){msg=m.e;S=null;render()}});
+    hc.on('close',()=>{msg='A kapcsolat megszakadt.';S=null;render()})});
+  peer.on('error',e=>{msg='Nem sikerült csatlakozni ('+e.type+'). Ellenőrizd a szobakódot.';render()});
+}
+function onMsg(id,m,c){
+  if(m.t==='join'){if(S.phase!=='lobby'){send(c,{t:'err',e:'A játék már elkezdődött.'});return}
+    conns[id]=c;S.players[id]={n:(m.n||'?').slice(0,20),sc:0};bc()}
+  else if(m.t==='ans'&&Array.isArray(m.a))gotAns(id,m.a.map(x=>String(x).slice(0,40)));
+  else if(m.t==='vote'&&S.phase==='review'&&m.ci===S.ci&&!S.vdone[id]){setV(id,m.ci,m.g,m.r);bc()}
+  else if(m.t==='vdone'&&S.phase==='review'&&m.ci===S.ci&&!S.vdone[id]){for(const k in m.v)setV(id,m.ci,k,m.v[k]);S.vdone[id]=1;if(vall())nxt(S.ci);else bc()}
+  else if(m.t==='nx'&&S.phase==='results')nxv(id,m.v);
+}
+const setV=(id,ci,g,r)=>{((S.votes[ci]??={})[g]??={})[id]=Math.max(0,Math.min(10,Math.round(+r)||0))};
+
+/* ---------- játékmenet (a házigazda gépe csak futtatja, külön joga nincs) ---------- */
+const act=()=>Object.keys(S.players).filter(p=>!S.players[p].off);
+function begin(){
+  const g=id=>$('#'+id).value;
+  let cats=g('cats').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,20);if(!cats.length)cats=DEF;
+  const letters=[...new Set([...g('letters').toUpperCase()].filter(x=>/\p{L}/u.test(x)))].join('')||LET;
+  S.cfg={cats,letters,rounds:Math.max(1,+g('rounds')||5),timer:Math.max(0,+g('timer')||0),vtimer:Math.max(0,+g('vtimer')||0),live:$('#live').checked};
+  startRound();
+}
+function startRound(){
+  const c=S.cfg;let pool=[...c.letters].filter(l=>!S.used.includes(l));
+  if(!pool.length){S.used=[];pool=[...c.letters]}
+  S.letter=pool[Math.random()*pool.length|0];S.used.push(S.letter);S.round++;S.phase='play';A={};S.done={};S.left=c.timer;
+  clearInterval(tm);clearInterval(vt);if(c.timer)tm=setInterval(()=>{if(--S.left<=0)endPlay();else bc()},1000);
+  bc();
+}
+function endPlay(){
+  if(S.phase!=='play')return;clearInterval(tm);S.phase='collect';bc();
+  const r=S.round;setTimeout(()=>S.round===r&&toReview(),1800);
+}
+function gotAns(id,a){
+  if(S.phase==='play'){A[id]=a;S.done[id]=1;if(act().every(p=>S.done[p]))toReview();else bc()}
+  else if(S.phase==='collect'){A[id]??=a;if(act().every(p=>A[p]))toReview()}
+}
+function toReview(){
+  if(S.phase!=='collect'&&S.phase!=='play')return;
+  clearInterval(tm);S.ans=A;S.ci=0;S.votes={};S.vdone={};S.phase='review';vstart();bc();
+}
+function groups(ci){
+  const L=norm(S.letter),g={};
+  for(const p in S.ans){const raw=(S.ans[p][ci]||'').trim();if(!raw)continue;const k=norm(raw);
+    (g[k]??={t:raw,w:[],bad:!k.startsWith(L)}).w.push(p)}
+  return Object.entries(g);
+}
+const vneed=p=>groups(S.ci).some(([k,g])=>!g.bad&&!g.w.includes(p));
+const vall=()=>act().every(p=>S.vdone[p]||!vneed(p));
+function vstart(){
+  clearInterval(vt);const c=S.ci,r=S.round;S.vleft=S.cfg.vtimer;
+  if(S.cfg.vtimer)vt=setInterval(()=>{if(--S.vleft<=0)nxt(c);else bc()},1000);
+  if(vall())setTimeout(()=>nxt(c),900);
+}
+function nxt(c){
+  if(S.phase!=='review'||c!==S.ci)return;clearInterval(vt);
+  if(S.ci<S.cfg.cats.length-1){S.ci++;S.vdone={};vstart()}else{score();S.phase='results';S.nx={}}
+  bc();
+}
+function score(){
+  const rs={},res=[];
+  for(let ci=0;ci<S.cfg.cats.length;ci++)for(const[k,g]of groups(ci)){
+    let val=0,perfect=false,n=0;
+    if(!g.bad){
+      const r=Object.entries(S.votes[ci]?.[k]||{}).filter(([p])=>!g.w.includes(p)).map(x=>x[1]);n=r.length;
+      if(!n)val=10;else{const z=r.filter(x=>x===0).length;if(z<=n-z){val=r.reduce((a,x)=>a+x,0)/n;perfect=r.every(x=>x===10)}}
+    }
+    val=Math.round(val*10)/10;
+    g.w.forEach(p=>rs[p]=(rs[p]||0)+val/g.w.length);
+    res.push({ci,t:g.t,w:g.w,val,pts:Math.round(val/g.w.length*10)/10,perfect,bad:g.bad,n});
+  }
+  for(const p in S.players){rs[p]=Math.round((rs[p]||0)*10)/10;S.players[p].sc=Math.round((S.players[p].sc+rs[p])*10)/10}
+  S.rs=rs;S.res=res;
+}
+function nxv(id,v){
+  if(S.phase!=='results')return;if(id)S.nx[id]=v;
+  const a=act();if(!a.every(p=>S.nx[p])){bc();return}
+  if(a.filter(p=>S.nx[p]==='new').length*2>a.length){for(const p in S.players){S.players[p].sc=0;if(S.players[p].off)delete S.players[p]}S.round=0;S.used=[]}
+  startRound();
+}
+function chk(){
+  if(S.phase==='play'&&act().every(p=>S.done[p]))toReview();
+  else if(S.phase==='review'&&vall())nxt(S.ci);
+  else if(S.phase==='results')nxv();
+}
+function hostGame(){const n=$('#nm').value.trim();if(!n){msg='Add meg a neved.';return render()}msg='';startHost(n)}
+function joinGame(){const n=$('#nm').value.trim(),c=$('#cd').value.trim().toUpperCase();if(!n||!c){msg='Add meg a neved és a szobakódot.';return render()}msg='';join(n,c)}
+
+/* ---------- felület ---------- */
+const landing=()=>`${ttl('Ország, város!')}<div class=sticker>Online, saját kategóriákkal!</div><p class=mut>Nincs szerver: a játékosok közvetlenül egymáshoz kapcsolódnak, a házigazda böngészője vezeti a játékot.</p>${msg?`<p class=bad>${esc(msg)}</p>`:''}<div class=card><label>Neved<input id=nm maxlength=20 value="${esc(name)}"></label><button class=b onclick="hostGame()">Új játék indítása</button></div><div class=card><label>Szobakód<input id=cd maxlength=4 value="${esc(location.hash.slice(1))}"></label><button class=b onclick="joinGame()">Csatlakozás</button></div>`;
+const settings=()=>`<div class=card><h3>Beállítások</h3><label>Kategóriák (soronként egy)<textarea id=cats rows=8>${DEF.join('\n')}</textarea></label><label>Körök száma<input id=rounds type=number min=1 value=5></label><label>Kitöltési idő másodpercben (0 = nincs, addig tart, amíg mindenki beküldi)<input id=timer type=number min=0 value=90></label><label>Szavazási idő kategóriánként másodpercben (0 = nincs)<input id=vtimer type=number min=0 value=20></label><label>Betűk, amikből sorsolunk<input id=letters value="${LET}"></label><label class=chk><input id=live type=checkbox checked> A válasz írója élőben látja, ki mennyit ad rá</label></div><button class=b onclick="begin()">Játék indítása</button>`;
+const ansHtml=x=>{const sz=x.bad?1:(1+x.val*.14).toFixed(2),cls=x.perfect?'perfect':x.val>=8?'shine':x.val===0?'zero':'';
+  const t=x.perfect?[...x.t].map((c,i)=>`<i style="--i:${i}">${c===' '?'&nbsp;':esc(c)}</i>`).join(''):esc(x.t);
+  return `<div class="ra ${cls}"><span class=rw style="font-size:${sz}rem">${t}</span><div class=who>✍️ ${x.w.map(p=>`<span class="chip sm lvc">${av(p)} ${esc(S.players[p]?.n||'?')}</span>`).join('')}<b class=pt>${x.bad?'rossz betű':x.val===0?'elutasítva':'+'+x.pts}</b></div></div>`};
+function view(){
+  const c=S.cfg,P=S.players;
+  if(S.phase==='lobby')return `${ttl('Ország, város!')}<div class=card><p>Szobakód: <b class=code>${S.code}</b></p><p class=mut>Meghívó link: ${esc(location.href.split('#')[0]+'#'+S.code)}</p><div id=pl class=row></div></div>`+(host?settings():'<p>Várakozás a játék indítására…</p>');
+  if(S.phase==='play')return `<div class=top><div class=letter>${S.letter}</div><div><div class=tm id=tm></div><div class=mut>${S.round}/${c.rounds}. kör</div></div></div><div class=card>${c.cats.map(x=>`<label>${esc(x)}<input class=in maxlength=40 autocomplete=off placeholder="${S.letter}…"></label>`).join('')}</div><button class=b id=sb onclick="subm()">Beküldöm ✔</button><div class=mut id=pr></div>`;
+  if(S.phase==='collect')return '<h2>Válaszok begyűjtése…</h2>';
+  if(S.phase==='review'){
+    const gs=groups(S.ci),need=gs.some(([k,g])=>!g.bad&&!g.w.includes(me));
+    return `<div class=top><div class=letter>${S.letter}</div><div><h2>${esc(c.cats[S.ci])}</h2><div class=mut>${S.ci+1}/${c.cats.length}. kategória</div><div class=tm id=tm></div></div></div>`
+    +(gs.length?gs.map(([k,g])=>{
+      const who=g.w.map(p=>`<span class="chip sm lvc">${av(p)} ${esc(P[p]?.n||'?')}</span>`).join(''),own=g.w.includes(me);
+      return `<div class="card g" data-k="${esc(k)}"${own?' data-own=1':''}><div class=ans>${esc(g.t)}</div><div class=who>✍️ ${who}</div>`
+      +(g.bad?`<div class=bad>Nem ${S.letter} betűvel kezdődik: 0 pont</div>`
+        :own?`<div class=mut>Ez a te válaszod, a többiek értékelik.</div><div class=lv></div>`
+        :`<div class=sl><div class=face>🤩</div><input type=range min=0 max=10 value=10 style="--p:100%" aria-label="Értékelés"><div class=num>10</div></div><div class=rejmsg>🚫 A 0 azt jelenti: ezt a szót nem fogadod el válasznak.</div>`)+`</div>`}).join('')
+      :'<div class=card>Ebbe a kategóriába senki nem írt semmit.</div>')
+    +(need?'<button class=b id=sb onclick="vsub()">Beküldöm a szavazatot ✔</button>':'<p class=mut>Ebben a kategóriában nincs mire szavaznod.</p>')+'<div class=mut id=pr></div>';
+  }
+  const fin=S.round>=c.rounds,rk=Object.entries(P).sort((a,b)=>b[1].sc-a[1].sc);
+  return ttl(fin?'Végeredmény!':S.round+'. kör eredménye')
+  +rk.map(([p,x],i)=>`<div class="rk${i?'':' top1'}"><span class=rn>${i?(['🥈','🥉'][i-1]||i+1):'👑'}</span><span class=rname>${av(p)} ${esc(x.n)}${p===me?' (te)':''}</span><span class=rpt>+${S.rs[p]}</span><b class=rt>${x.sc}</b></div>`).join('')
+  +`<div class=row>${fin?'':`<button class=b data-nx=n onclick="nx('n')">Következő kör ▶</button>`}<button class="b alt" data-nx=new onclick="nx('new')">Új játék 🔄</button></div><div class=mut id=pr></div><h2>A kör válaszai</h2>`
+  +c.cats.map((cat,ci)=>{const r=S.res.filter(x=>x.ci===ci);return `<div class=card><h3>${esc(cat)}</h3>${r.length?r.map(ansHtml).join(''):'<div class=mut>Ebbe senki nem írt semmit.</div>'}</div>`}).join('');
+}
+function upd(){
+  const t=$('#tm');
+  if(t){const pl=S.phase==='play',on=pl?S.cfg.timer:S.cfg.vtimer,L=pl?S.left:S.vleft;t.textContent=on?'⏱ '+L:'';t.classList.toggle('hot',on&&L<=10);if(on&&L<=5&&L>0)snd('tick')}
+  const p=$('#pl');if(p){const n=Object.keys(S.players).length;if(pc&&n>pc)snd('join');pc=n;p.innerHTML=Object.values(S.players).map((x,i)=>`<span class=chip>${AV[i%AV.length]} ${esc(x.n)}</span>`).join('')}
+  const pr=$('#pr');
+  if(pr){const a=act(),n=S.phase==='play'?a.filter(q=>S.done[q]).length:S.phase==='review'?a.filter(q=>S.vdone[q]||!vneed(q)).length:a.filter(q=>S.nx?.[q]).length;
+    pr.textContent=({play:'Beküldték',review:'Szavaztak',results:'Készen vannak'})[S.phase]+': '+n+'/'+a.length}
+  document.querySelectorAll('[data-nx]').forEach(b=>b.classList.toggle('sel',S.nx?.[me]===b.dataset.nx));
+  if(S.phase==='review'){
+    const G=Object.fromEntries(groups(S.ci));
+    document.querySelectorAll('.g[data-own] .lv').forEach(el=>{const k=el.closest('.g').dataset.k,g=G[k];if(!g)return;const vs=S.votes[S.ci]?.[k]||{};
+      el.innerHTML=S.cfg.live?act().filter(q=>!g.w.includes(q)).map(q=>`<span class="chip sm lvc">${av(q)} ${esc(S.players[q].n)} ${vs[q]==null?'…':FACE[vs[q]]+' '+vs[q]}</span>`).join(''):'<span class=mut>A többiek most értékelik…</span>'});
+  }
+}
+function render(){
+  if(S&&S.phase==='collect'&&sent!==S.round){sent=S.round;const a=[...document.querySelectorAll('.in')].map(i=>i.value);host?gotAns(me,a):send(hc,{t:'ans',a})}
+  if(!S){key='';app.innerHTML=landing();return}
+  const k=S.phase+S.round+(S.phase==='review'?S.ci:'');
+  if(k===key){upd();return}
+  key=k;app.innerHTML=view();upd();scrollTo(0,0);fx();
+}
+/* ---------- beküldés és csúszka ---------- */
+const lock=()=>{const b=$('#sb');if(b){b.disabled=true;b.textContent='Beküldve ✓ Várunk a többiekre…'}};
+function subm(){
+  const a=[...document.querySelectorAll('.in')].map(i=>i.value);sent=S.round;
+  document.querySelectorAll('.in').forEach(i=>i.disabled=true);lock();snd('yes');
+  host?gotAns(me,a):send(hc,{t:'ans',a});
+}
+function vsub(){
+  const v={};document.querySelectorAll('.g input').forEach(i=>v[i.closest('.g').dataset.k]=+i.value);
+  document.querySelectorAll('.g input').forEach(i=>i.disabled=true);lock();snd('yes');
+  const m={t:'vdone',ci:S.ci,v};host?onMsg(me,m):send(hc,m);
+}
+function nx(v){const m={t:'nx',v};host?onMsg(me,m):send(hc,m)}
+app.addEventListener('click',e=>{if(e.target.closest('button'))snd('click')});
+app.addEventListener('input',e=>{
+  const i=e.target;if(i.type!=='range')return;
+  const g=i.closest('.g'),v=+i.value,f=g.querySelector('.face'),n=g.querySelector('.num');
+  i.style.setProperty('--p',v*10+'%');f.textContent=FACE[v];n.textContent=v;
+  for(const el of[f,n]){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump')}
+  g.classList.toggle('rej',v===0);
+  tone(260+v*75,.07,'square',.05);navigator.vibrate?.(8);
+  if(v===0)snd('no');else if(v===10){snd('yes');const r=i.getBoundingClientRect();burst(r.right-20,r.top,['✨','⭐','💛'])}
+  const m={t:'vote',ci:S.ci,g:g.dataset.k,r:v};host?onMsg(me,m):send(hc,m);
+});
+/* ---------- hangok (WebAudio, nincs hangfájl) ---------- */
+let ac,mute=false,pc=0;try{mute=localStorage.getItem('ov-mute')==='1'}catch(e){}
+function tone(f,d=.12,type='square',v=.08,t0=0,to){
+  if(mute)return;
+  try{ac??=new(window.AudioContext||window.webkitAudioContext)();ac.resume();
+    const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+t0;
+    o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);
+    g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}
+}
+const seq=(n,st=.1,ty='triangle',v=.1)=>n.forEach((f,i)=>tone(f,st*1.6,ty,v,i*st));
+const SND={click:()=>tone(520,.07,'square',.05,0,780),join:()=>seq([523,784],.09),
+  start:()=>seq([392,523,659,784,1047],.08,'square',.07),tick:()=>tone(880,.06,'square',.06),
+  land:()=>{tone(180,.25,'sine',.25,0,60);seq([784,988,1175],.07)},stop:()=>tone(220,.5,'sawtooth',.1,0,110),
+  yes:()=>seq([784,1175],.06,'triangle',.1),no:()=>tone(200,.22,'sawtooth',.08,0,90),whoosh:()=>tone(1200,.25,'sine',.06,0,200),
+  win:()=>seq([523,659,784,1047,784,1047,1319],.11,'square',.07),end:()=>seq([392,494,587,784],.1,'triangle',.1)};
+const snd=n=>SND[n]?.();
+/* ---------- látvány ---------- */
+const AV=['🦊','🐸','🐙','🦄','🐯','🐼','🦖','🐧','🦉','🐝','🐳','🦋'],FACE=['😬','😬','😕','😐','🙂','🙂','😊','😄','😍','🤩','🤩'];
+const av=p=>AV[Object.keys(S.players).indexOf(p)%AV.length]||'🙂';
+const ttl=t=>`<h1 class=t>${t.split(' ').map((w,j)=>`<span class=w>${[...w].map((c,i)=>`<span style="--i:${i+j*5}">${esc(c)}</span>`).join('')}</span>`).join(' ')}</h1>`;
+function confetti(n=40){const em=['🎉','✨','⭐','🎊','🍀','💖'];for(let i=0;i<n;i++){const s=document.createElement('span');s.className='cf';s.textContent=em[Math.random()*em.length|0];
+  s.style.cssText=`--x:${Math.random()*100}vw;--s:${18+Math.random()*22}px;--d:${1.8+Math.random()*1.8}s;--dx:${(Math.random()-.5)*200}px;--r:${Math.random()*720-360}deg;animation-delay:${Math.random()*.4}s`;
+  document.body.append(s);setTimeout(()=>s.remove(),4500)}}
+function burst(x,y,em){for(let i=0;i<7;i++){const s=document.createElement('span');s.className='sp';s.textContent=em[i%em.length];
+  s.style.cssText=`--x:${x}px;--y:${y}px;--dx:${(Math.random()-.5)*160}px;--dy:${-30-Math.random()*110}px`;document.body.append(s);setTimeout(()=>s.remove(),900)}}
+function fx(){
+  [...app.children].forEach((e,i)=>e.style.setProperty('--n',i));
+  const p=S.phase;
+  if(p==='play'){sent=-1;snd('start');const L=$('.letter');
+    if(L){L.className='letter roll';let n=0;const iv=setInterval(()=>{const l=[...S.cfg.letters];L.textContent=l[Math.random()*l.length|0];tone(300+Math.random()*500,.04,'square',.04);
+      if(++n>14){clearInterval(iv);L.textContent=S.letter;L.className='letter land';snd('land')}},70)}}
+  else if(p==='collect')snd('stop');
+  else if(p==='review')snd('whoosh');
+  else if(p==='results'){const f=S.round>=S.cfg.rounds,pf=S.res.some(x=>x.perfect);snd(f||pf?'win':'end');confetti(f?80:pf?45:25)}
+}
+for(let i=0;i<14;i++){const s=document.createElement('span');s.className='fl';s.textContent=LET[i%LET.length];
+  s.style.cssText=`--x:${Math.random()*95}vw;--y:${Math.random()*90}vh;--s:${40+Math.random()*70}px;--d:${4+Math.random()*5}s;--r:${Math.random()*60-30}deg`;document.body.append(s)}
+const mb=document.createElement('button');mb.className='mute';mb.title='Hang be/ki';mb.textContent=mute?'🔇':'🔊';
+mb.onclick=()=>{mute=!mute;try{localStorage.setItem('ov-mute',mute?1:0)}catch(e){}mb.textContent=mute?'🔇':'🔊';snd('join')};document.body.append(mb);
+render();
+</script>
+</body>
+</html>
